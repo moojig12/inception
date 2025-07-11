@@ -10,4 +10,4 @@ COPY ./tools/script.sh /
 
 RUN service mysql start
 
-CMD ./script.sh
+CMD ["./script.sh"]
