@@ -3,8 +3,15 @@
 
 
 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/C=DE/L=BE/O=42/OU=student/CN=[nmandakh.42.fr](http://nmandakh.42.fr/)"
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+#   -keyout /etc/ssl/private/nginx-selfsigned.key \
+#   -out /etc/ssl/certs/nginx-selfsigned.crt \
+#   -subj "/C=DE/L=BE/O=42/OU=student/CN=[nmandakh.42.fr](http://nmandakh.42.fr/)"
 
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/nginx-selfsigned.key \
+  -out /etc/ssl/certs/nginx-selfsigned.crt \
+  -subj "/C=DE/L=BE/O=42/OU=student/CN=nmandakh.42.fr"
 
 echo "
 server {
@@ -13,7 +20,7 @@ server {
 
     server_name www.$DOMAIN_NAME $DOMAIN_NAME;
 
-    ssl_certificate $CERTS_;
+    ssl_certificate /etc/ssl/certs/nginx-selfsigned.crt;
     ssl_certificate_key /etc/ssl/private/nginx-selfsigned.key;" > /etc/nginx/sites-available/default
 
 
@@ -32,4 +39,4 @@ echo '
 } ' >>  /etc/nginx/sites-available/default
 
 
-nginx -g "daemon off;"
+exec nginx -g "daemon off;"
