@@ -2,7 +2,7 @@ FROM debian:bullseye
 
 RUN apt update -y && apt-get upgrade -y
 
-RUN apt-get install php-fpm php-mysql -y
+RUN apt-get install php-fpm php-mysqli -y
 
 RUN apt install curl -y
 

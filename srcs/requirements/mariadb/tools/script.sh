@@ -3,7 +3,8 @@
 #db_name = Database Name
 #db_user = User
 #db_pwd = User Password
-mysqld_safe &
+
+service mariadb start
 sleep 5
 
 
@@ -18,6 +19,8 @@ until mysqladmin ping --silent; do
 	sleep 2
 done
 
-mysql < db1.sql
+mariadb -u root -p12345 < db1.sql
 
-wait
+service mariadb stop
+
+mysqld
