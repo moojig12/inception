@@ -1,12 +1,9 @@
 FROM debian:bullseye
 
-RUN apt update -y && apt-get upgrade -y
+RUN apt update -y && apt install -y php-fpm
 
-RUN apt-get install php-fpm php-mysqli -y
+COPY ./tools/www.conf /etc/php/7.4/fpm/pool.d/.
 
-RUN apt install curl -y
+RUN mkdir /run/php/
 
-COPY ./tools/script.sh /
-COPY ./tools/wp-config.php /
-
-CMD ["./script.sh"]
+CMD ["php-fpm7.4", "-F"]
