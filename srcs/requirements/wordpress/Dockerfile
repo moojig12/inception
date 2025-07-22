@@ -1,11 +1,14 @@
 FROM debian:bullseye
 
 RUN apt update -y && apt install -y php-fpm php-mysqli curl
+RUN apt clean
 
-COPY ./tools/www.conf /etc/php/7.4/fpm/pool.d/.
-COPY ./tools/script.sh .
+RUN rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /run/php/
-RUN chmod +x script.sh
+COPY tools/www.conf /etc/php/7.4/fpm/pool.d/www.conf
 
-CMD ["./script.sh"]
+COPY tools/wordpress.sh .
+
+RUN chmod +x ./wordpress.sh
+
+CMD ["./wordpress.sh"]

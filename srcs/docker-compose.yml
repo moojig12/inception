@@ -11,9 +11,20 @@
 #   dripver_opts:
 #     device: /home/moojig12/data
 
+secrets:
+  db_root_pass.txt:
+    file: ./secrets/db_root_pass.txt
+  db_pass.txt:
+    file: ./secrets/db_pass.txt
+  wp_admin_pass.txt:
+    file: ./secrets/wp_admin_pass.txt
+  wp_user_pass.txt:
+    file: ./secrets/wp_user_pass.txt
+
 networks:
   inception:
     name: inception
+    driver: bridge
 
 services:
   nginx:
@@ -24,25 +35,50 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      inception:
+      - inception
+    depends_on:
+      - wordpress
     volumes:
       - ./web:/var/www/html
+    restart: unless-stopped
   wordpress:
     build: requirements/wordpress/.
     container_name: wordpress
     # image: wordpress:42
     networks:
-      inception:
+      - inception
+    depends_on:
+      - mariadb
     volumes:
       - ./web:/var/www/html
+    secrets:
+      - db_pass.txt
+      - wp_admin_pass.txt
+      - wp_user_pass.txt
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_pass.txt
+      WP_USER_PASSWORD_FILE: /run/secrets/wp_user_pass.txt
     env_file:
       - .env
+    expose:
+      - "9000"
+    restart: unless-stopped
   mariadb:
     build: requirements/mariadb/.
     container_name: mariadb
     networks:
-      inception:
+      - inception
     volumes:
       - ./database:/var/lib/mysql
+    secrets:
+            - db_root_pass.txt
+            - db_pass.txt
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_pass.txt
+      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
     env_file:
       - .env
+    expose:
+      - "3306"
+    restart: unless-stopped

@@ -1,14 +1,18 @@
 FROM debian:bullseye
 
-RUN apt update -y && apt install -y mariadb-server
+RUN apt update -y
+RUN apt upgrade -y
+RUN apt install -y mariadb-server
+RUN apt clean
 
-COPY ./tools/50-server.cnf /etc/mysql/mariadb.conf.d/.
-COPY ./tools/init.sql /etc/mysql/init.sql
-COPY ./tools/init_setup.sh .
-COPY ./tools/script.sh .
+RUN rm -rf /var/lib/apt/lists/*
 
-RUN chmod +rwx /etc/mysql/init.sql
+COPY tools/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
 
-RUN mkdir /run/mysqld && chmod +x script.sh
+RUN chmod 644 /etc/mysql/mariadb.conf.d/50-server.cnf
 
-CMD ["./script.sh"]
+COPY tools/mariadb.sh ./mariadb.sh
+
+RUN chmod +x ./mariadb.sh
+
+CMD ["./mariadb.sh"]
