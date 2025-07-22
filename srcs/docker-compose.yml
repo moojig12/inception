@@ -1,11 +1,19 @@
 
 # volumes:
 #   wordpress:
-#     name: wordpress2
+#     name: wordpress
 #     driver: local
 #     driver_opts:
 #       device: /home/moojig12/data
+# mariadb:
+#   name: database
+#   driver: local
+#   dripver_opts:
+#     device: /home/moojig12/data
 
+networks:
+  inception:
+    name: inception
 
 services:
   nginx:
@@ -15,11 +23,26 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      inception:
     volumes:
       - ./web:/var/www/html
   wordpress:
     build: requirements/wordpress/.
     container_name: wordpress
     # image: wordpress:42
+    networks:
+      inception:
     volumes:
       - ./web:/var/www/html
+    env_file:
+      - .env
+  mariadb:
+    build: requirements/mariadb/.
+    container_name: mariadb
+    networks:
+      inception:
+    volumes:
+      - ./database:/var/lib/mysql
+    env_file:
+      - .env
