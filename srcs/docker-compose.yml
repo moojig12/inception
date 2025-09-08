@@ -1,15 +1,15 @@
 
-# volumes:
-#   wordpress:
-#     name: wordpress
-#     driver: local
-#     driver_opts:
-#       device: /home/moojig12/data
-# mariadb:
-#   name: database
-#   driver: local
-#   dripver_opts:
-#     device: /home/moojig12/data
+volumes:
+  wordpress:
+    name: wordpress_data
+    driver: local
+    driver_opts:
+      device: /home/moojig12/data
+mariadb:
+  name: database
+  driver: local
+  dripver_opts:
+    device: /home/moojig12/data
 
 secrets:
   db_root_pass.txt:
@@ -24,13 +24,16 @@ secrets:
 networks:
   inception:
     name: inception
-    driver: bridge
+    # driver: bridge
 
 services:
   nginx:
-    build: requirements/nginx/.
+    build: 
+      context: requirements/nginx/.
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
     container_name: nginx
-    # image: nginx:42
+    image: nginx:notlatest
     ports:
       - "443:443"
     networks:
@@ -38,18 +41,18 @@ services:
     depends_on:
       - wordpress
     volumes:
-      - ./web:/var/www/html
+      - wordpress_data:/var/www/html
     restart: unless-stopped
   wordpress:
     build: requirements/wordpress/.
     container_name: wordpress
-    # image: wordpress:42
+    image: wordpress:notlatest
     networks:
       - inception
     depends_on:
       - mariadb
     volumes:
-      - ./web:/var/www/html
+      - wordpress_data:/var/www/html
     secrets:
       - db_pass.txt
       - wp_admin_pass.txt
@@ -66,10 +69,11 @@ services:
   mariadb:
     build: requirements/mariadb/.
     container_name: mariadb
+    image: mariadb:notlatest
     networks:
       - inception
     volumes:
-      - ./database:/var/lib/mysql
+      - database:/var/lib/mysql
     secrets:
             - db_root_pass.txt
             - db_pass.txt

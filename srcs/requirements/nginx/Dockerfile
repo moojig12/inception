@@ -1,7 +1,10 @@
 FROM debian:bullseye
 
-RUN apt update && apt install -y nginx
+RUN apt update && apt upgrade -y && apt install -y nginx
 RUN apt install -y openssl
+
+ARG DOMAIN_NAME
+ENV DOMAIN_NAME=${DOMAIN_NAME}
 
 RUN mkdir -p /etc/nginx/ssl
 
@@ -13,6 +16,6 @@ RUN chmod 755 /var/www/wordpress
 
 RUN chown -R www-data:www-data /var/www/wordpress
 
-COPY ./tools/nginx.conf /etc/nginx/sites-available/.
+COPY ./tools/nginx.conf /etc/nginx/nginx.conf
 
 CMD ["nginx", "-g", "daemon off;"]
