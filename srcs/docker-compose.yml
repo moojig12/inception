@@ -8,7 +8,7 @@ volumes:
   mariadb:
     name: database
     driver: local
-    dripver_opts:
+    driver_opts:
       device: /home/moojig12/data
 
 secrets:
