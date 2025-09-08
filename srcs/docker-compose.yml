@@ -5,11 +5,11 @@ volumes:
     driver: local
     driver_opts:
       device: /home/moojig12/data
-mariadb:
-  name: database
-  driver: local
-  dripver_opts:
-    device: /home/moojig12/data
+  mariadb:
+    name: database
+    driver: local
+    dripver_opts:
+      device: /home/moojig12/data
 
 secrets:
   db_root_pass.txt:
