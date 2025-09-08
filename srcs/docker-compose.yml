@@ -6,7 +6,7 @@ volumes:
     driver_opts:
       device: /home/moojig12/data
   mariadb:
-    name: database
+    name: mariadb_data
     driver: local
     driver_opts:
       device: /home/moojig12/data
@@ -73,7 +73,7 @@ services:
     networks:
       - inception
     volumes:
-      - database:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     secrets:
             - db_root_pass.txt
             - db_pass.txt
