@@ -3,10 +3,14 @@ volumes:
   wordpress_data:
     driver: local
     driver_opts:
+      type: none
+      o: bind
       device: /home/moojig12/data
   mariadb_data:
     driver: local
     driver_opts:
+      type: none
+      o: bind
       device: /home/moojig12/data
 
 secrets:
