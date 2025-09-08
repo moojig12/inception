@@ -4,7 +4,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/moojig12/data/mariadb
+      device: /home/moojig12/data/wordpress
   mariadb_data:
     driver: local
     driver_opts:
