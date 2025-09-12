@@ -1,12 +1,29 @@
 #!/bin/bash
 
 # Read secrets from mounted files
-MYSQL_PASSWORD=$(cat /run/secrets/db_password.txt)
-MYSQL_ROOT_PASSWORD=$(cat /run/secrets/db_root_password.txt)
+MYSQL_PASSWORD=$(cat /run/secrets/db_pass.txt)
+MYSQL_ROOT_PASSWORD=$(cat /run/secrets/db_root_pass.txt)
 
-# Start service
-service mariadb start
-sleep 5
+mkdir -p /run/mysqld
+chown -R mysql:mysql /run/mysqld
+
+if [ ! -d /var/lib/mysql/mysql ]; then
+    echo "Initializing MariaDB..."
+    mysqld --initialize-insecure --user=mysql --datadir=/var/lib/mysql
+fi
+
+# Start MariaDB in the background
+mysqld_safe --datadir=/var/lib/mysql &
+
+# Wait for server to be ready
+echo "Waiting for MariaDB to start..."
+until mysqladmin ping &>/dev/null; do
+    sleep 1
+done
+
+# # Start service
+# service mariadb start
+# sleep 5
 
 # SQL Setup
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;"

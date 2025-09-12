@@ -9,9 +9,9 @@ if ! command -v wp >/dev/null 2>&1; then
   chmod +x /usr/local/bin/wp
 fi
 
-MYSQL_PASSWORD="$(cat /run/secrets/db_password.txt)"
-WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_admin_password.txt)"
-WP_USER_PASSWORD="$(cat /run/secrets/wp_user_password.txt)"
+MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
+WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_admin_pass.txt)"
+WP_USER_PASSWORD="$(cat /run/secrets/wp_user_pass.txt)"
 
 : "${MYSQL_DATABASE:?MYSQL_DATABASE missing}"
 : "${MYSQL_USER:?MYSQL_USER missing}"

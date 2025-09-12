@@ -15,8 +15,5 @@ stop :
 start : 
 	@docker-compose -f ./srcs/docker-compose.yml start
 
-clean :
-	docker rmi -f $(docker images -aq)
-
 status : 
 	@docker ps

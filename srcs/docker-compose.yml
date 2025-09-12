@@ -1,18 +1,4 @@
 
-volumes:
-  wordpress_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/nmandakh/data/wordpress
-  mariadb_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/nmandakh/data/mariadb
-
 secrets:
   db_root_pass.txt:
     file: ./secrets/db_root_pass.txt
@@ -23,27 +9,42 @@ secrets:
   wp_user_pass.txt:
     file: ./secrets/wp_user_pass.txt
 
+volumes:
+  wordpress_db:
+    name: wordpress
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/moojig12/data/wordpress
+  mariadb_db:
+    name: mariadb
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/moojig12/data/mariadb
+
 networks:
   inception:
     name: inception
-    # driver: bridge
 
 services:
   nginx:
-    build: 
-      context: requirements/nginx/.
+    build:
+      context: ./requirements/nginx/.
       args:
         DOMAIN_NAME: ${DOMAIN_NAME}
     container_name: nginx
     image: nginx:notlatest
+    volumes:
+      - wordpress_db:/var/www/wordpress
     ports:
       - "443:443"
     networks:
       - inception
     depends_on:
       - wordpress
-    volumes:
-      - wordpress_data:/var/www/html
     restart: unless-stopped
   wordpress:
     build: requirements/wordpress/.
@@ -52,15 +53,26 @@ services:
     networks:
       - inception
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     volumes:
-      - wordpress_data:/var/www/html
+      - wordpress_db:/var/www/html
     secrets:
       - db_pass.txt
       - wp_admin_pass.txt
       - wp_user_pass.txt
     environment:
+      # MYSQL_DATABASE: ${MYSQL_DATABASE}
+      # MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
+      MYSQL_HOST: mariadb
+
+      # SITE_TITLE: ${SITE_TITLE}
+      # WP_ADMIN_USER: ${WP_ADMIN_USER}
+      # WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      # WP_USER: ${WP_USER}
+      # WP_USER_EMAIL: ${WP_USER_EMAIL}
+
       WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_pass.txt
       WP_USER_PASSWORD_FILE: /run/secrets/wp_user_pass.txt
     env_file:
@@ -69,21 +81,33 @@ services:
       - "9000"
     restart: unless-stopped
   mariadb:
-    build: requirements/mariadb/.
+    build: ./requirements/mariadb/.
     container_name: mariadb
     image: mariadb:notlatest
     networks:
       - inception
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mariadb_db:/var/lib/mysql
     secrets:
             - db_root_pass.txt
             - db_pass.txt
     environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_pass.txt
-      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
+      # MYSQL_DATABASE: ${MYSQL_DATABASE}
+      # MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password.txt
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password.txt
     env_file:
       - .env
     expose:
       - "3306"
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password.txt) --silent || mysqladmin ping -h 127.0.0.1 --silent"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
