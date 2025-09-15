@@ -7,8 +7,8 @@ MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
 : "${MYSQL_DATABASE:?MYSQL_DATABASE is required}"
 : "${MYSQL_USER:?MYSQL_USER is required}"
 
-mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld /var/lib/mysql
+# mkdir -p /run/mysqld
+# chown -R mysql:mysql /run/mysqld /var/lib/mysql
 
 if [ ! -d /var/lib/mysql/mysql ]; then
   echo "[mariadb] initializing datadir"
@@ -25,15 +25,21 @@ for i in {1..60}; do
   sleep 1
 done
 
-if mariadb -uroot -e "SELECT 1" >/dev/null 2>&1; then
-  echo "[mariadb] setting root password"
-  mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
-fi
+# if mariadb -uroot -e "SELECT 1" >/dev/null 2>&1; then
+#   echo "[mariadb] setting root password"
+#   mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+# fi
+
+echo ${MYSQL_DATABASE} ${MYSQL_PASSWORD} ${MYSQL_ROOT_PASSWORD} ${MYSQL_USER}
 
 echo "[mariadb] ensuring database and user"
-mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;"
-mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE USER IF NOT EXISTS \`${MYSQL_USER}\`@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
-mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO \`${MYSQL_USER}\`@'%'; FLUSH PRIVILEGES;"
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;"
+mysql -u root -e "CREATE USER IF NOT EXISTS \`${MYSQL_USER}\`@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;"
+mysql -u root -e "FLUSH PRIVILEGES;"
 
-trap 'kill "$mysqld_pid"; wait "$mysqld_pid"' TERM INT
-wait "$mysqld_pid"
+echo before
+mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
+echo after
+exec mysqld_safe
