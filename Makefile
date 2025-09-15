@@ -1,19 +1,35 @@
+SHELL := /bin/bash
+
+COMPOSE_FILE := srcs/docker-compose.yml
+ENV_FILE     := srcs/.env
+
+DATA_DIR := /home/nmandakh/data
+DB_DIR   := $(DATA_DIR)/mariadb
+WP_DIR   := $(DATA_DIR)/wordpress
+
+COMPOSE  := docker compose -p srcs --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
+
+.PHONY: all up down clean fclean re
+
 all: up
 
-up :
-	@docker-compose -f ./srcs/docker-compose.yml up -d
+up:
+	@echo ">> Ensuring host data directories exist under $(DATA_DIR)"
+	mkdir -p "$(DB_DIR)" "$(WP_DIR)"
+	$(COMPOSE) up -d --build
 
-up-build :
-	@docker-compose -f ./srcs/docker-compose.yml up --build -d
+down:
+	$(COMPOSE) down
 
-down : 
-	@docker-compose -f ./srcs/docker-compose.yml down
+clean:
+	$(COMPOSE) down -v
 
-stop : 
-	@docker-compose -f ./srcs/docker-compose.yml stop
+fclean:
+	docker stop $$(docker ps -qa); \
+	docker rm $$(docker ps -qa); \
+	docker rmi -f $$(docker images -qa); \
+	docker volume rm $$(docker volume ls -q); \
+	docker network rm $$(docker network ls -q) 2>/dev/null; \
+	rm -rf "$(DB_DIR)" "$(WP_DIR)"
 
-start : 
-	@docker-compose -f ./srcs/docker-compose.yml start
-
-status : 
-	@docker ps
+re: fclean up

@@ -30,84 +30,78 @@ networks:
     name: inception
 
 services:
-  nginx:
-    build:
-      context: ./requirements/nginx/.
-      args:
-        DOMAIN_NAME: ${DOMAIN_NAME}
-    container_name: nginx
-    image: nginx:notlatest
-    volumes:
-      - wordpress_db:/var/www/wordpress
-    ports:
-      - "443:443"
-    networks:
-      - inception
-    depends_on:
-      - wordpress
-    restart: unless-stopped
-  wordpress:
-    build: requirements/wordpress/.
-    container_name: wordpress
-    image: wordpress:notlatest
-    networks:
-      - inception
-    depends_on:
-      - mariadb
-        # condition: service_healthy
-    volumes:
-      - wordpress_db:/var/www/html
-    secrets:
-      - db_pass.txt
-      - wp_admin_pass.txt
-      - wp_user_pass.txt
-    environment:
-      # MYSQL_DATABASE: ${MYSQL_DATABASE}
-      # MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
-      MYSQL_HOST: mariadb
-
-      # SITE_TITLE: ${SITE_TITLE}
-      # WP_ADMIN_USER: ${WP_ADMIN_USER}
-      # WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
-      # WP_USER: ${WP_USER}
-      # WP_USER_EMAIL: ${WP_USER_EMAIL}
-
-      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_pass.txt
-      WP_USER_PASSWORD_FILE: /run/secrets/wp_user_pass.txt
-    env_file:
-      - .env
-    expose:
-      - "9000"
-    restart: unless-stopped
   mariadb:
-    build: ./requirements/mariadb/.
     container_name: mariadb
+    build: ./requirements/mariadb
     image: mariadb:notlatest
     networks:
       - inception
+    restart: unless-stopped
     volumes:
       - mariadb_db:/var/lib/mysql
-    secrets:
-            - db_root_pass.txt
-            - db_pass.txt
     environment:
-      # MYSQL_DATABASE: ${MYSQL_DATABASE}
-      # MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/db_password.txt
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password.txt
-    env_file:
-      - .env
-    expose:
-      - "3306"
-    restart: unless-stopped
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_pass.txt
+    secrets:
+      - db_root_pass.txt
+      - db_pass.txt
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "mysqladmin ping -h 127.0.0.1 -uroot -p$(cat /run/secrets/db_root_password.txt) --silent || mysqladmin ping -h 127.0.0.1 --silent"
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$$(cat /run/secrets/db_root_password.txt) --silent || mysqladmin ping -h 127.0.0.1 --silent"
         ]
-      interval: 10s
-      timeout: 10s
-      retries: 1
+      interval: 5s
+      timeout: 5s
+      retries: 20
       start_period: 30s
+
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress
+    image: wordpress:notlatest
+    networks:
+      - inception
+    restart: unless-stopped
+    volumes:
+      - wordpress_db:/var/www/wordpress
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_pass.txt
+      MYSQL_HOST: mariadb
+
+      SITE_TITLE: ${SITE_TITLE}
+      WP_ADMIN_USER: ${WP_ADMIN_USER}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+      WP_USER: ${WP_USER}
+      WP_USER_EMAIL: ${WP_USER_EMAIL}
+
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_pass.txt
+      WP_USER_PASSWORD_FILE: /run/secrets/wp_user_pass.txt
+    secrets:
+      - db_pass.txt
+      - wp_admin_pass.txt
+      - wp_user_pass.txt
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+    image: nginx:notlatest
+    networks:
+      - inception
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_db:/var/www/wordpress
+    depends_on:
+      - wordpress
