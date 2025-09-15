@@ -101,13 +101,13 @@ services:
     expose:
       - "3306"
     restart: unless-stopped
-    # healthcheck:
-    #   test:
-    #     [
-    #       "CMD-SHELL",
-    #       "mysqladmin ping -h 127.0.0.1 -uroot -p$(cat /run/secrets/db_root_password.txt) --silent || mysqladmin ping -h 127.0.0.1 --silent"
-    #     ]
-    #   interval: 10s
-    #   timeout: 10s
-    #   retries: 10
-    #   start_period: 30s
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$(cat /run/secrets/db_root_password.txt) --silent || mysqladmin ping -h 127.0.0.1 --silent"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 1
+      start_period: 30s
