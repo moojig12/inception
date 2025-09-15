@@ -8,12 +8,13 @@
 
 
 user                    = mysql
+port                    = 3306
 bind-address            = 0.0.0.0
-socket                  = /run/mysqld/mysqld.sock
+socket                  = /run/mysql/mysql.sock
+pid-file                = /run/mysql/mysql.pid
 # basedir                 = /usr
 datadir                 = /var/lib/mysql
 tmpdir                  = /tmp
-port                    = 3306
 
 ssl-ca = /etc/mysql/cacert.pem
 ssl-cert = /etc/mysql/server-cert.pem

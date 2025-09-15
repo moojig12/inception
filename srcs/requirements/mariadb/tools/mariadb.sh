@@ -16,10 +16,7 @@ fi
 mysqld_safe --datadir=/var/lib/mysql &
 
 # Wait for server to be ready
-echo "Waiting for MariaDB to start..."
-until mysqladmin ping &>/dev/null; do
-    sleep 1
-done
+until mysqladmin ping -h 127.0.0.1 --silent; do sleep 1; done
 
 # # Start service
 # service mariadb start
