@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "[mariadb] starting initialization"
-
-
 MYSQL_ROOT_PASSWORD="$(cat /run/secrets/db_root_pass.txt)"
 MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
 
@@ -13,17 +10,14 @@ MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
 mkdir -p /run/mysqld
 chown -R mysql:mysql /run/mysqld /var/lib/mysql
 
-# Initialize DB if empty
 if [ ! -d /var/lib/mysql/mysql ]; then
   echo "[mariadb] initializing datadir"
   mariadb-install-db --user=mysql --datadir=/var/lib/mysql
 fi
 
-# Start MariaDB in the background
 mysqld_safe --datadir=/var/lib/mysql &
 mysqld_pid=$!
 
-# Wait until MariaDB is ready
 for i in {1..60}; do
   if mysqladmin ping --silent > /dev/null 2>&1; then
     break
@@ -31,23 +25,15 @@ for i in {1..60}; do
   sleep 1
 done
 
-echo "[mariadb] setting root passwords"
-mysql -u root <<-EOSQL
-  ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-  ALTER USER 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-  FLUSH PRIVILEGES;
-EOSQL
+if mariadb -uroot -e "SELECT 1" >/dev/null 2>&1; then
+  echo "[mariadb] setting root password"
+  mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+fi
 
-echo "[mariadb] creating database and user"
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
-  CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
-  CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-  GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
-  FLUSH PRIVILEGES;
-EOSQL
+echo "[mariadb] ensuring database and user"
+mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;"
+mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE USER IF NOT EXISTS \`${MYSQL_USER}\`@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+mariadb -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO \`${MYSQL_USER}\`@'%'; FLUSH PRIVILEGES;"
 
-# Shutdown temporary server
-mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
-
-# Start MariaDB in foreground
-exec mysqld_safe
+trap 'kill "$mysqld_pid"; wait "$mysqld_pid"' TERM INT
+wait "$mysqld_pid"

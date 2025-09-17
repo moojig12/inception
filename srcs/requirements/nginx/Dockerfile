@@ -3,6 +3,8 @@ FROM debian:bullseye
 RUN apt update && apt upgrade -y && apt install -y nginx
 RUN apt install -y openssl
 
+RUN apt clean && rm -rf /var/lib/apt/lists/*
+
 ARG DOMAIN_NAME
 ENV DOMAIN_NAME=${DOMAIN_NAME}
 
