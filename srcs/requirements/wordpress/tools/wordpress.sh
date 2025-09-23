@@ -4,14 +4,14 @@ set -e
 mkdir -p /var/www/wordpress
 cd /var/www/wordpress
 
-MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
-WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_admin_pass.txt)"
-WP_USER_PASSWORD="$(cat /run/secrets/wp_user_pass.txt)"
-
 if ! command -v wp >/dev/null 2>&1; then
   curl -sS -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
   chmod +x /usr/local/bin/wp
 fi
+
+MYSQL_PASSWORD="$(cat /run/secrets/db_pass.txt)"
+WP_ADMIN_PASSWORD="$(cat /run/secrets/wp_admin_pass.txt)"
+WP_USER_PASSWORD="$(cat /run/secrets/wp_user_pass.txt)"
 
 : "${MYSQL_DATABASE:?MYSQL_DATABASE missing}"
 : "${MYSQL_USER:?MYSQL_USER missing}"

@@ -4,8 +4,8 @@ COMPOSE_FILE := srcs/docker-compose.yml
 ENV_FILE     := srcs/.env
 
 DATA_DIR := /home/nmandakh/data
-DB_DIR   := $(DATA_DIR)/mariadb
-WP_DIR   := $(DATA_DIR)/wordpress
+DB_DIR   := $(DATA_DIR)/mariadb/
+WP_DIR   := $(DATA_DIR)/wordpress/
 
 COMPOSE  := docker compose -p srcs --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 
